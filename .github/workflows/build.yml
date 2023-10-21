@@ -72,7 +72,7 @@ jobs:
       # I don't know how to fix this on non-Linux, so I simply won't :)
       # I've disabled the local cache for those platforms instead
       - name: Remove duplicate manifest entries (ziglang/zig#16149)
-        if: ${{ runner.os == 'Linux' }}
+        if: ${{ runner.os == 'Linux' && steps.local-cache.outputs.cache-hit == 'true' }}
         run: |
           sudo apt install moreutils
           for f in zig-cache/h/*.txt; do
