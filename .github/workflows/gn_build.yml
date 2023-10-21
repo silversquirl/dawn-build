@@ -41,6 +41,10 @@ jobs:
     env:
       CCACHE_DIR: ${{ github.workspace }}/ccache
       DEPOT_TOOLS_WIN_TOOLCHAIN: 0
+      key-stem: ${{ matrix.arch }}-${{ matrix.platform }}
+
+    defaults:
+      run: { shell: bash }
 
     steps:
       - uses: actions/checkout@v4
@@ -62,7 +66,6 @@ jobs:
 
       - name: Install build tools (Windows)
         if: ${{ runner.os == 'Windows' }}
-        shell: bash
         run: |
           choco install ccache
           vcpkg install vcpkg-tool-gn vcpkg-tool-ninja
@@ -72,20 +75,20 @@ jobs:
           echo "$PATH"
 
       - name: Fetch Dawn
-        shell: bash
-        run: git clone --depth=1 https://dawn.googlesource.com/dawn.git
+        id: get-dawn
+        run: |
+          git clone --depth=1 https://dawn.googlesource.com/dawn.git
+          cd dawn
+          echo "rev=$(git rev-parse HEAD)" >>"$GITHUB_ENV"
 
       - name: Fetch depot_tools
-        shell: bash
         run: git clone --depth=1 https://chromium.googlesource.com/chromium/tools/depot_tools.git
 
       - name: Add depot_tools to path
-        shell: bash
         run: echo "$PWD/depot_tools" >>"$GITHUB_PATH"
 
       - name: Update dependencies
         working-directory: dawn
-        shell: bash
         run: |
           cp ../custom.gclient .gclient
           gclient sync
@@ -97,11 +100,14 @@ jobs:
           path: |
             dawn/out/Release
             ccache
-          key: ${{ runner.os }}-compile-${{ matrix.arch }}-${{ matrix.platform }}
+          key: compile-${{ env.key-stem }}-${{ steps.get-dawn.outputs.rev }}-${{ github.sha }}
+          restore-keys: |
+            compile-${{ env.key-stem }}-${{ steps.get-dawn.outputs.rev }}-
+            compile-incomplete-${{ env.key-stem }}-${{ steps.get-dawn.outputs.rev }}-
+            compile-${{ env.key-stem }}
 
       - name: Build Dawn
         working-directory: dawn
-        shell: bash
         run: |
           mkdir -p out/Release
           cp ../args.gn out/Release/
@@ -110,16 +116,23 @@ jobs:
 
       - name: Save compilation cache
         uses: actions/cache/save@v3
-        if: ${{ always() }}
         with:
           path: |
             dawn/out/Release
             ccache
           key: ${{ steps.compile-cache.outputs.cache-primary-key }}
 
+      - name: Save incomplete compilation cache
+        if: ${{ !success() }}
+        uses: actions/cache/save@v3
+        with:
+          path: |
+            dawn/out/Release
+            ccache
+          key: compile-incomplete-${{ env.key-stem }}-${{ steps.get-dawn.outputs.rev }}-${{ github.sha }}-${{ github.run_number }}-${{ github.run_attempt }}
+
       - name: Bundle build artifacts
         working-directory: dawn/out
-        shell: bash
         run: tar cf Release.tar Release
 
       - name: Upload artifact

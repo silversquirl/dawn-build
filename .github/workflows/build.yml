@@ -64,10 +64,10 @@ jobs:
         uses: actions/cache/restore@v3
         with:
           path: ~/.cache/zig
-          key: global-${{ hashFiles('build.zig.zon') }}-${{ runner.os }}
+          key: zig-global-${{ runner.os }}-${{ hashFiles('build.zig.zon') }}
           restore-keys: |
-            global-${{ hashFiles('build.zig.zon') }}-
-            global-
+            zig-global-${{ runner.os }}-${{ hashFiles('build.zig.zon') }}-
+            zig-global-${{ runner.os }}-
 
       # FIXME: disabled because of ziglang/zig#16149
       # - name: Load local Zig cache
@@ -86,7 +86,7 @@ jobs:
         uses: actions/cache/save@v3
         if: always()
         with:
-          path: zig-cache
+          path: ~/.cache/zig
           key: ${{ steps.global-cache.outputs.cache-primary-key }}
 
       # - name: Save local Zig cache
