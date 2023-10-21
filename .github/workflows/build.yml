@@ -74,7 +74,7 @@ jobs:
       - name: Remove duplicate manifest entries (ziglang/zig#16149)
         if: ${{ runner.os == 'Linux' }}
         run: |
-          apt install moreutils
+          sudo apt install moreutils
           for f in zig-cache/h/*.txt; do
             sort -u "$f" | sponge "$f"
           done
