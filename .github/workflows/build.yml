@@ -1,6 +1,11 @@
 name: Build Dawn (zig + mach-gpu-dawn)
-# TODO: schedule automatic builds
-on: [push, workflow_dispatch]
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - .github/workflows/build.yml
+      - build.zig
+      - build.zig.zon
 
 jobs:
   build:
@@ -27,6 +32,10 @@ jobs:
         exclude:
           - arch: aarch64
             platform: windows
+
+    permissions:
+      contents: read
+      id-token: write
 
     runs-on: ${{ matrix.runner }}
     steps:
@@ -114,7 +123,7 @@ jobs:
             }
 
       - name: Publish to npm
-        run: npm publish --access public
+        run: npm publish --access public --provenance
         working-directory: zig-out/lib
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
