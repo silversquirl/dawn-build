@@ -16,10 +16,13 @@ jobs:
 
         include:
           - runner: ubuntu-latest
+            libext: so
           - platform: windows
             runner: windows-latest
+            libext: dll
           - platform: macos
             runner: macos-latest
+            libext: dylib
 
         exclude:
           - arch: aarch64
@@ -80,8 +83,33 @@ jobs:
           path: zig-cache
           key: ${{ steps.local-cache.outputs.cache-primary-key }}
 
+      # Not actually used by anything, but useful for manual inspection, etc.
       - name: Upload artifact
         uses: actions/upload-artifact@v3
         with:
           name: dawn-${{ matrix.arch }}-${{ matrix.platform }}
           path: zig-out/lib/*
+
+      - name: Setup Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: 20.x
+          registry-url: https://registry.npmjs.org
+
+      - name: Generate package.json
+        uses: DamianReeves/write-file-action@v1.2
+        with:
+          path: zig-out/lib/package.json
+          write-mode: overwrite
+          contents: |
+            {
+              "name": "@bun-gpu/dawn-${{ matrix.arch }}-${{ matrix.platform }}",
+              "version": "0.1.0+${{ github.sha }}",
+              "files": ["libdawn.${{ matrix.libext }}"]
+            }
+
+      - name: Publish to npm
+        run: npm publish
+        working-directory: zig-out/lib
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
