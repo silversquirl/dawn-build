@@ -17,6 +17,7 @@ jobs:
           - runner: ubuntu-latest
             libext: so
           - platform: win
+            runner: windows-latest
             libext: dll
           - platform: mac
             runner: macos-latest
@@ -24,7 +25,7 @@ jobs:
 
         exclude:
           - arch: arm64
-            platform: windows
+            platform: win
 
     runs-on: ${{ matrix.runner }}
 
@@ -49,6 +50,12 @@ jobs:
           unzip gn-mac-amd64.zip
           echo "$PWD/gn-mac-amd64" >>"$GITHUB_PATH"
 
+      - name: Install build tools (Windows)
+        if: ${{ runner.os == 'Windows' }}
+        run: |
+          choco install ccache
+          vcpkg install vcpkg-tool-gn vcpkg-tool-ninja
+
       - name: Fetch Dawn
         run: git clone https://dawn.googlesource.com/dawn.git
 
@@ -68,10 +75,12 @@ jobs:
         run: git clone https://chromium.googlesource.com/chromium/tools/depot_tools.git
 
       - name: Add depot_tools to path
+        shell: bash
         run: echo "$PWD/depot_tools" >>"$GITHUB_PATH"
 
       - name: Update dependencies
         working-directory: dawn
+        shell: bash
         run: |
           cp ../custom.gclient .gclient
           gclient sync
@@ -97,6 +106,7 @@ jobs:
 
       - name: Build Dawn
         working-directory: dawn
+        shell: bash
         run: |
           mkdir -p out/Release
           cp ../args.gn out/Release/
@@ -114,6 +124,7 @@ jobs:
 
       - name: Bundle build artifacts
         working-directory: dawn/out
+        shell: bash
         run: tar cf Release.tar Release
 
       - name: Upload artifact

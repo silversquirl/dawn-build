@@ -4,10 +4,9 @@ solutions = [
     "deps_file"   : "DEPS",
     "managed"     : False,
 
-    # Disable sysroot
     "custom_hooks": [
+        # Disable x86 sysroot; we only need x64
         {"name": "sysroot_x86", "action": ["true"]},
-        {"name": "sysroot_x64", "action": ["true"]},
     ],
   },
 ]
