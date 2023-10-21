@@ -69,10 +69,8 @@ jobs:
         run: |
           choco install ccache
           vcpkg install vcpkg-tool-gn vcpkg-tool-ninja
-          # Free some space
-          rm -rf "/c/Program Files/dotnet"
-          ls -l "/c/Program Files"
-          echo "$PATH"
+          # Free some space - we run out otherwise
+          rm -rf "/c/Program Files/dotnet" "/c/ghcup" "/c/Program Files/Microsoft SQL Server" "/c/SeleniumWebDrivers"
 
       - name: Fetch Dawn
         id: get-dawn
@@ -104,7 +102,7 @@ jobs:
           restore-keys: |
             compile-${{ env.key-stem }}-${{ steps.get-dawn.outputs.rev }}-
             compile-incomplete-${{ env.key-stem }}-${{ steps.get-dawn.outputs.rev }}-
-            compile-${{ env.key-stem }}
+            compile-${{ env.key-stem }}-
 
       - name: Build Dawn
         working-directory: dawn
@@ -139,4 +137,4 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: dawn-${{ matrix.arch }}-${{ matrix.platform }}
-          path: out/Release.tar
+          path: dawn/out/Release.tar
