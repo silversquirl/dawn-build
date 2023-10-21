@@ -109,6 +109,7 @@ jobs:
             {
               "name": "@bun-gpu/dawn-${{ matrix.arch }}-${{ matrix.platform }}",
               "version": "0.0.1-${{ github.sha }}",
+              "description": "Dawn shared library for ${{ matrix.arch }} ${{ matrix.platform }}",
               "files": ["libdawn.${{ matrix.libext }}"]
             }
 
