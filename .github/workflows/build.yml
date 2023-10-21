@@ -119,6 +119,9 @@ jobs:
               "name": "@bun-gpu/dawn-${{ matrix.arch }}-${{ matrix.platform }}",
               "version": "0.0.1-${{ github.sha }}",
               "description": "Dawn shared library for ${{ matrix.arch }} ${{ matrix.platform }}",
+              "license": "BSD-3-Clause",
+              "repository": "github:silversquirl/dawn-build",
+              "bugs": "https://github.com/silversquirl/dawn-build/issues",
               "files": ["libdawn.${{ matrix.libext }}"]
             }
 
