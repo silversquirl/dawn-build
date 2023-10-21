@@ -55,16 +55,29 @@ jobs:
         uses: actions/cache/restore@v3
         with:
           path: ~/.cache/zig
-          key: global-${{ hashFiles('build.zig.zon') }}
-          restore-keys: global-
+          key: global-${{ hashFiles('build.zig.zon') }}-${{ runner.os }}
+          restore-keys: |
+            global-${{ hashFiles('build.zig.zon') }}-
+            global-
 
       - name: Load local Zig cache
+        if: ${{ runner.os == 'Linux' }}
         id: local-cache
         uses: actions/cache/restore@v3
         with:
           path: zig-cache
           key: local-${{ matrix.arch }}-${{ matrix.platform }}-${{ hashFiles('build.zig.zon') }}
           restore-keys: local-${{ matrix.arch }}-${{ matrix.platform }}-
+
+      # I don't know how to fix this on non-Linux, so I simply won't :)
+      # I've disabled the local cache for those platforms instead
+      - name: Remove duplicate manifest entries (ziglang/zig#16149)
+        if: ${{ runner.os == 'Linux' }}
+        run: |
+          apt install moreutils
+          for f in zig-cache/h/*.txt; do
+            sort -u "$f" | sponge "$f"
+          done
 
       - name: Build
         run: zig build --verbose -Doptimize=ReleaseFast -Dtarget=${{ matrix.arch }}-${{ matrix.platform }}
