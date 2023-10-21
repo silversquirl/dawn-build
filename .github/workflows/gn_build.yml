@@ -62,6 +62,7 @@ jobs:
 
       - name: Install build tools (Windows)
         if: ${{ runner.os == 'Windows' }}
+        shell: bash
         run: |
           choco install ccache
           vcpkg install vcpkg-tool-gn vcpkg-tool-ninja
@@ -71,9 +72,11 @@ jobs:
           echo "$PATH"
 
       - name: Fetch Dawn
+        shell: bash
         run: git clone --depth=1 https://dawn.googlesource.com/dawn.git
 
       - name: Fetch depot_tools
+        shell: bash
         run: git clone --depth=1 https://chromium.googlesource.com/chromium/tools/depot_tools.git
 
       - name: Add depot_tools to path
