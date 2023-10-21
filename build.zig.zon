@@ -1,0 +1,29 @@
+.{
+    .name = "dawn-build",
+    .version = "0.1.0",
+    .paths = .{ "build.zig", "build.zig.zon" },
+    .dependencies = .{
+        .mach_gpu_dawn = .{
+            .url = "https://pkg.machengine.org/mach-gpu-dawn/f68c57b8fe74346bf74a98c0beedce5768401d44.tar.gz",
+            .hash = "1220c064bad7682d7cd814063c767861aec07adbed0faa69947dec98dc5f3bebb0e8",
+        },
+
+        // Transitive dependencies; need to be here because mach-gpu-dawn is a bit weird
+        .xcode_frameworks = .{
+            .url = "https://pkg.machengine.org/xcode-frameworks/1b5863a77384f3ac633b496cf6decbf42ceb1ed2.tar.gz",
+            .hash = "12209ccfa1c7320f1d4eed0baf718efa9b4c8d8e42595a019a7569c2adf48d27c262",
+        },
+        .direct3d_headers = .{
+            .url = "https://pkg.machengine.org/direct3d-headers/9617cfd497fae598610a7b0a4be0b035e7308e93.tar.gz",
+            .hash = "122098cc0b0a39d24aaffcd6d5556e8f31f5dd1a754559ffa468918f2ed6c1ad0a03",
+        },
+        .vulkan_headers = .{
+            .url = "https://pkg.machengine.org/vulkan-headers/1feb2d841870f7461c28b95549cb707440226138.tar.gz",
+            .hash = "12209e716013e33618aaf5d915c6f2d196922b36aa16e06b52d7c28eafb2b3da0f4e",
+        },
+        .x11_headers = .{
+            .url = "https://pkg.machengine.org/x11-headers/d5594ef666e51b2531511a15db03b5439e4c11e5.tar.gz",
+            .hash = "12208aaa9355611470ae1357dfa2fd8c86e61679c2a9d343a8afaf25d3826a893111",
+        },
+    },
+}

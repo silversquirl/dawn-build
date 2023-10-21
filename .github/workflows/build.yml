@@ -1,0 +1,58 @@
+name: Build Dawn
+# TODO: schedule automatic builds
+on: [push, workflow_dispatch]
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [x86_64, aarch64]
+        platform:
+          - linux-gnu
+          - linux-musl
+          - macos
+          - windows
+
+        exclude:
+          - arch: aarch64
+            platform: windows
+
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Check Mach's preferred Zig version
+        id: zig-version
+        run: |
+          echo "version=$(curl -sSL https://github.com/hexops/mach/raw/main/.zigversion)" >>"$GITHUB_OUTPUT"
+
+      - name: Install Zig
+        uses: goto-bus-stop/setup-zig@v2
+        with:
+          version: ${{ steps.zig-version.outputs.version }}
+
+      - name: Checkout mach-gpu-dawn
+        uses: actions/checkout@v4
+        with:
+          path: mach-gpu-dawn
+          repository: hexops/mach-gpu-dawn
+          submodules: true
+
+      - name: Zig cache
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cache/zig
+            zig-cache
+          key: ${{ runner.os }}-zig-${{ matrix.arch }}-${{ matrix.platform }}
+
+      - name: Build
+        run: zig build --verbose -Doptimize=ReleaseFast -Dtarget=${{ matrix.arch }}-${{ matrix.platform }}
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: dawn-${{ matrix.arch }}-${{ matrix.platform }}
+          path: zig-out/lib/*
