@@ -78,6 +78,7 @@ jobs:
           for f in zig-cache/h/*.txt; do
             sort -u "$f" | sponge "$f"
           done
+        continue-on-error: true
 
       - name: Build
         run: zig build --verbose -Doptimize=ReleaseFast -Dtarget=${{ matrix.arch }}-${{ matrix.platform }}
@@ -117,12 +118,12 @@ jobs:
           contents: |
             {
               "name": "@bun-gpu/dawn-${{ matrix.arch }}-${{ matrix.platform }}",
-              "version": "0.1.0+${{ github.sha }}",
+              "version": "0.0.1-${{ github.sha }}",
               "files": ["libdawn.${{ matrix.libext }}"]
             }
 
       - name: Publish to npm
-        run: npm publish
+        run: npm publish --access public
         working-directory: zig-out/lib
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
