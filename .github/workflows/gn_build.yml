@@ -1,6 +1,12 @@
 name: Build Dawn (gn + build_depot)
 # TODO: schedule automatic builds
-on: [push, workflow_dispatch]
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - .github/workflows/gn_build.yml
+      - args.gn
+      - custom.gclient
 
 jobs:
   build:
@@ -59,19 +65,7 @@ jobs:
       - name: Fetch Dawn
         run: git clone https://dawn.googlesource.com/dawn.git
 
-      - name: Load depot_tools cache
-        id: depot-tools-cache
-        uses: actions/cache/restore@v3
-        with:
-          path: |
-            depot_tools
-            dawn/third_party
-            dawn/tools/golang
-            dawn/build/linux/*-sysroot
-          key: ${{ runner.os }}-depot_tools
-
       - name: Fetch depot_tools
-        if: ${{ steps.depot-tools-cache.outputs.cache-hit != 'true' }}
         run: git clone https://chromium.googlesource.com/chromium/tools/depot_tools.git
 
       - name: Add depot_tools to path
@@ -84,16 +78,6 @@ jobs:
         run: |
           cp ../custom.gclient .gclient
           gclient sync
-
-      - name: Save depot_tools cache
-        uses: actions/cache/save@v3
-        with:
-          path: |
-            depot_tools
-            dawn/third_party
-            dawn/tools/golang
-            dawn/build/linux/*-sysroot
-          key: ${{ steps.depot-tools-cache.outputs.cache-primary-key }}
 
       - name: Load compilation cache
         id: compile-cache
