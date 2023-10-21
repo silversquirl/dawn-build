@@ -60,25 +60,15 @@ jobs:
             global-${{ hashFiles('build.zig.zon') }}-
             global-
 
-      - name: Load local Zig cache
-        if: ${{ runner.os == 'Linux' }}
-        id: local-cache
-        uses: actions/cache/restore@v3
-        with:
-          path: zig-cache
-          key: local-${{ matrix.arch }}-${{ matrix.platform }}-${{ hashFiles('build.zig.zon') }}
-          restore-keys: local-${{ matrix.arch }}-${{ matrix.platform }}-
-
-      # I don't know how to fix this on non-Linux, so I simply won't :)
-      # I've disabled the local cache for those platforms instead
-      - name: Remove duplicate manifest entries (ziglang/zig#16149)
-        if: ${{ runner.os == 'Linux' && steps.local-cache.outputs.cache-hit == 'true' }}
-        run: |
-          sudo apt install moreutils
-          for f in zig-cache/h/*.txt; do
-            sort -u "$f" | sponge "$f"
-          done
-        continue-on-error: true
+      # FIXME: disabled because of ziglang/zig#16149
+      # - name: Load local Zig cache
+      #   if: ${{ runner.os == 'Linux' }}
+      #   id: local-cache
+      #   uses: actions/cache/restore@v3
+      #   with:
+      #     path: zig-cache
+      #     key: local-${{ matrix.arch }}-${{ matrix.platform }}-${{ hashFiles('build.zig.zon') }}
+      #     restore-keys: local-${{ matrix.arch }}-${{ matrix.platform }}-
 
       - name: Build
         run: zig build --verbose -Doptimize=ReleaseFast -Dtarget=${{ matrix.arch }}-${{ matrix.platform }}
@@ -90,12 +80,12 @@ jobs:
           path: zig-cache
           key: ${{ steps.global-cache.outputs.cache-primary-key }}
 
-      - name: Save local Zig cache
-        uses: actions/cache/save@v3
-        if: always()
-        with:
-          path: zig-cache
-          key: ${{ steps.local-cache.outputs.cache-primary-key }}
+      # - name: Save local Zig cache
+      #   uses: actions/cache/save@v3
+      #   if: always()
+      #   with:
+      #     path: zig-cache
+      #     key: ${{ steps.local-cache.outputs.cache-primary-key }}
 
       # Not actually used by anything, but useful for manual inspection, etc.
       - name: Upload artifact
