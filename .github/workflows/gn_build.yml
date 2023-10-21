@@ -20,7 +20,8 @@ jobs:
           - win
 
         include:
-          - runner: ubuntu-latest
+          - platform: linux
+            runner: ubuntu-latest
             libext: so
           - platform: win
             runner: windows-latest
@@ -30,6 +31,8 @@ jobs:
             libext: dylib
 
         exclude:
+          - arch: arm64
+            platform: linux
           - arch: arm64
             platform: win
 
