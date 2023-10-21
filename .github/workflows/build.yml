@@ -14,11 +14,18 @@ jobs:
           - macos
           - windows
 
+        include:
+          - runner: ubuntu-latest
+          - platform: windows
+            runner: windows-latest
+          - platform: macos
+            runner: macos-latest
+
         exclude:
           - arch: aarch64
             platform: windows
 
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.runner }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -40,16 +47,38 @@ jobs:
           repository: hexops/mach-gpu-dawn
           submodules: true
 
-      - name: Zig cache
-        uses: actions/cache@v3
+      - name: Load global Zig cache
+        id: global-cache
+        uses: actions/cache/restore@v3
         with:
-          path: |
-            ~/.cache/zig
-            zig-cache
-          key: ${{ runner.os }}-zig-${{ matrix.arch }}-${{ matrix.platform }}
+          path: ~/.cache/zig
+          key: global-${{ hashFiles('build.zig.zon') }}
+          restore-keys: global-
+
+      - name: Load local Zig cache
+        id: local-cache
+        uses: actions/cache/restore@v3
+        with:
+          path: zig-cache
+          key: local-${{ matrix.arch }}-${{ matrix.platform }}-${{ hashFiles('build.zig.zon') }}
+          restore-keys: local-${{ matrix.arch }}-${{ matrix.platform }}-
 
       - name: Build
         run: zig build --verbose -Doptimize=ReleaseFast -Dtarget=${{ matrix.arch }}-${{ matrix.platform }}
+
+      - name: Save global Zig cache
+        uses: actions/cache/save@v3
+        if: always()
+        with:
+          path: zig-cache
+          key: ${{ steps.global-cache.outputs.cache-primary-key }}
+
+      - name: Save local Zig cache
+        uses: actions/cache/save@v3
+        if: always()
+        with:
+          path: zig-cache
+          key: ${{ steps.local-cache.outputs.cache-primary-key }}
 
       - name: Upload artifact
         uses: actions/upload-artifact@v3
