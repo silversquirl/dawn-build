@@ -1,4 +1,4 @@
-name: Build Dawn
+name: Build Dawn (gn + build_depot)
 # TODO: schedule automatic builds
 on: [push, workflow_dispatch]
 
@@ -23,7 +23,7 @@ jobs:
             libext: dylib
 
         exclude:
-          - arch: aarch64
+          - arch: arm64
             platform: windows
 
     runs-on: ${{ matrix.runner }}
@@ -73,7 +73,7 @@ jobs:
       - name: Update dependencies
         working-directory: dawn
         run: |
-          cp scripts/standalone.gclient .gclient
+          cp ../custom.gclient .gclient
           gclient sync
 
       - name: Save depot_tools cache
@@ -100,7 +100,7 @@ jobs:
         run: |
           mkdir -p out/Release
           cp ../args.gn out/Release/
-          gn gen out/Release --args='target_os=${{ matrix.platform }} target_cpu=${{ matrix.arch }}'
+          gn gen out/Release --args='target_os="${{ matrix.platform }}" target_cpu="${{ matrix.arch }}"'
           autoninja -C out/Release
 
       - name: Save compilation cache

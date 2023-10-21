@@ -4,6 +4,8 @@ is_official_build = true
 chrome_pgo_phase = 1
 # Use ccache
 cc_wrapper = "ccache"
+# Do not use sysroot - it's big, and we're in a reproducible env anyway
+use_sysroot = false
 
 # Enable Wayland support
 dawn_use_wayland = true

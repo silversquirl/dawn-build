@@ -1,4 +1,4 @@
-name: Build Dawn
+name: Build Dawn (zig + mach-gpu-dawn)
 # TODO: schedule automatic builds
 on: [push, workflow_dispatch]
 
