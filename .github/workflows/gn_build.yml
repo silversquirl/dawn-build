@@ -1,0 +1,123 @@
+name: Build Dawn
+# TODO: schedule automatic builds
+on: [push, workflow_dispatch]
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [x64, arm64]
+        platform:
+          - linux
+          - mac
+          - win
+
+        include:
+          - runner: ubuntu-latest
+            libext: so
+          - platform: win
+            libext: dll
+          - platform: mac
+            runner: macos-latest
+            libext: dylib
+
+        exclude:
+          - arch: aarch64
+            platform: windows
+
+    runs-on: ${{ matrix.runner }}
+
+    env:
+      CCACHE_DIR: ${{ github.workspace }}/ccache
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install build tools (Linux)
+        if: ${{ runner.os == 'Linux' }}
+        run: |
+          sudo apt update
+          sudo apt install gn ninja-build ccache
+
+      - name: Install build tools (macOS)
+        if: ${{ runner.os == 'MacOS' }}
+        run: |
+          brew update
+          brew install ninja ccache
+          curl -Lo gn-mac-amd64.zip https://chrome-infra-packages.appspot.com/dl/gn/gn/mac-amd64/+/latest
+          unzip gn-mac-amd64.zip
+          echo "$PWD/gn-mac-amd64" >>"$GITHUB_PATH"
+
+      - name: Fetch Dawn
+        run: git clone https://dawn.googlesource.com/dawn.git
+
+      - name: Load depot_tools cache
+        id: depot-tools-cache
+        uses: actions/cache/restore@v3
+        with:
+          path: |
+            depot_tools
+            dawn/third_party
+            dawn/tools/golang
+            dawn/build/linux/*-sysroot
+          key: ${{ runner.os }}-depot_tools
+
+      - name: Fetch depot_tools
+        if: ${{ steps.depot-tools-cache.outputs.cache-hit != 'true' }}
+        run: git clone https://chromium.googlesource.com/chromium/tools/depot_tools.git
+
+      - name: Add depot_tools to path
+        run: echo "$PWD/depot_tools" >>"$GITHUB_PATH"
+
+      - name: Update dependencies
+        working-directory: dawn
+        run: |
+          cp scripts/standalone.gclient .gclient
+          gclient sync
+
+      - name: Save depot_tools cache
+        uses: actions/cache/save@v3
+        with:
+          path: |
+            depot_tools
+            dawn/third_party
+            dawn/tools/golang
+            dawn/build/linux/*-sysroot
+          key: ${{ steps.depot-tools-cache.outputs.cache-primary-key }}
+
+      - name: Load compilation cache
+        id: compile-cache
+        uses: actions/cache/restore@v3
+        with:
+          path: |
+            dawn/out/Release
+            ccache
+          key: ${{ runner.os }}-compile-${{ matrix.arch }}-${{ matrix.platform }}
+
+      - name: Build Dawn
+        working-directory: dawn
+        run: |
+          mkdir -p out/Release
+          cp ../args.gn out/Release/
+          gn gen out/Release --args='target_os=${{ matrix.platform }} target_cpu=${{ matrix.arch }}'
+          autoninja -C out/Release
+
+      - name: Save compilation cache
+        uses: actions/cache/save@v3
+        if: ${{ always() }}
+        with:
+          path: |
+            dawn/out/Release
+            ccache
+          key: ${{ steps.compile-cache.outputs.cache-primary-key }}
+
+      - name: Bundle build artifacts
+        working-directory: dawn/out
+        run: tar cf Release.tar Release
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: dawn-${{ matrix.arch }}-${{ matrix.platform }}
+          path: out/Release.tar

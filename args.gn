@@ -1,0 +1,34 @@
+# Max optimization
+is_official_build = true
+# No PGO because we're missing some scripts for that, idk why
+chrome_pgo_phase = 1
+# Use ccache
+cc_wrapper = "ccache"
+
+# Enable Wayland support
+dawn_use_wayland = true
+
+# This is incompatible with ccache apparently
+use_debug_fission = false
+
+# Disable some unnecessary features to save space:
+
+# Null backend is not very useful
+dawn_enable_null = false
+
+# We trust Dawn to use APIs correctly
+dawn_enable_spirv_validation = false
+dawn_enable_vulkan_validation_layers = false
+
+# I genuinely have no clue why this is even an option. WebGPU on GLES on Vulkan????
+dawn_use_angle = false
+
+# Software rendering sounds like a horrible plan, let's not
+dawn_use_swiftshader = false
+
+# Don't need benchmarks or tests
+tint_build_benchmarks = false
+tint_build_unittests = false
+
+# Again, trust tint to be good
+tint_build_glsl_validator = false
