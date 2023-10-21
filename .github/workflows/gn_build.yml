@@ -37,6 +37,7 @@ jobs:
 
     env:
       CCACHE_DIR: ${{ github.workspace }}/ccache
+      DEPOT_TOOLS_WIN_TOOLCHAIN: 0
 
     steps:
       - uses: actions/checkout@v4

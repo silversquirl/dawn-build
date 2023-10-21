@@ -1,7 +1,8 @@
 # Max optimization
 is_official_build = true
-# No PGO because we're missing some scripts for that, idk why
-chrome_pgo_phase = 1
+# No PGO because we're missing some scripts for that for some reason
+# I also don't think it works correctly with ccache
+chrome_pgo_phase = 0
 # Use ccache
 cc_wrapper = "ccache"
 
