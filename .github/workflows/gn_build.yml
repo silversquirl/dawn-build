@@ -39,7 +39,8 @@ jobs:
     runs-on: ${{ matrix.runner }}
 
     env:
-      CCACHE_DIR: ${{ github.workspace }}/ccache
+      BUILD_DIR: ${{ matrix.platform == 'win' && '/c' || github.workspace }}/dawn/out/Release
+      CCACHE_DIR: ${{ matrix.platform == 'win' && '/c' || github.workspace }}/ccache
       DEPOT_TOOLS_WIN_TOOLCHAIN: 0
       key-stem: ${{ matrix.arch }}-${{ matrix.platform }}
 
@@ -69,8 +70,6 @@ jobs:
         run: |
           choco install ccache
           vcpkg install vcpkg-tool-gn vcpkg-tool-ninja
-          # Free some space - we run out otherwise
-          rm -rf "/c/Program Files/dotnet" "/c/ghcup" "/c/Program Files/Microsoft SQL Server" "/c/SeleniumWebDrivers"
 
       - name: Fetch Dawn
         id: get-dawn
@@ -96,8 +95,8 @@ jobs:
         uses: actions/cache/restore@v3
         with:
           path: |
-            dawn/out/Release
-            ccache
+            ${{ env.BUILD_DIR }}
+            ${{ env.CCACHE_DIR }}
           key: compile-${{ env.key-stem }}-${{ steps.get-dawn.outputs.rev }}-${{ github.sha }}
           restore-keys: |
             compile-${{ env.key-stem }}-${{ steps.get-dawn.outputs.rev }}-
@@ -107,17 +106,17 @@ jobs:
       - name: Build Dawn
         working-directory: dawn
         run: |
-          mkdir -p out/Release
-          cp ../args.gn out/Release/
-          gn gen out/Release --args='target_os="${{ matrix.platform }}" target_cpu="${{ matrix.arch }}"'
-          autoninja -C out/Release
+          mkdir -p ${{ env.BUILD_DIR }}
+          cp ../args.gn ${{ env.BUILD_DIR }}
+          gn gen ${{ env.BUILD_DIR }} --args='target_os="${{ matrix.platform }}" target_cpu="${{ matrix.arch }}"'
+          autoninja -C ${{ env.BUILD_DIR }}
 
       - name: Save compilation cache
         uses: actions/cache/save@v3
         with:
           path: |
-            dawn/out/Release
-            ccache
+            ${{ env.BUILD_DIR }}
+            ${{ env.CCACHE_DIR }}
           key: ${{ steps.compile-cache.outputs.cache-primary-key }}
 
       - name: Save incomplete compilation cache
@@ -125,16 +124,16 @@ jobs:
         uses: actions/cache/save@v3
         with:
           path: |
-            dawn/out/Release
-            ccache
+            ${{ env.BUILD_DIR }}
+            ${{ env.CCACHE_DIR }}
           key: compile-incomplete-${{ env.key-stem }}-${{ steps.get-dawn.outputs.rev }}-${{ github.sha }}-${{ github.run_number }}-${{ github.run_attempt }}
 
       - name: Bundle build artifacts
-        working-directory: dawn/out
+        working-directory: ${{ env.BUILD_DIR }}/..
         run: tar cf Release.tar Release
 
       - name: Upload artifact
         uses: actions/upload-artifact@v3
         with:
           name: dawn-${{ matrix.arch }}-${{ matrix.platform }}
-          path: dawn/out/Release.tar
+          path: ${{ env.BUILD_DIR }}.tar
